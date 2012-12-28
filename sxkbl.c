@@ -1,8 +1,5 @@
-#include <ctype.h>
 #include <libgen.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <X11/XKBlib.h>
 
 #include "arg.h"
@@ -25,8 +22,8 @@ usage() {
 int
 main(int argc, char *argv[]) {
 	Bool lflag, uflag;
-	char layout[80];
-	int i;
+	char *layout;
+	char *ptr;
 
 	lflag = uflag = False;
 
@@ -56,20 +53,20 @@ main(int argc, char *argv[]) {
 	if(XkbGetState(dpy, XkbUseCoreKbd, &state) != Success)
 		die("sxkbl: error getting state\n");
 
-	strncpy(layout, XGetAtomName(dpy, kb->names->groups[state.group]),
-			sizeof layout);
+	layout = XGetAtomName(dpy, kb->names->groups[state.group]);
 
 	if(uflag)
-		for(i = 0; layout[i]; i++)
-			layout[i] = toupper(layout[i]);
+		for(ptr=layout;*ptr;++ptr)
+			if (*ptr >= 'a' && *ptr <= 'z')
+				*ptr-=32;
 
-	if(lflag)
-		printf("%s\n", layout);
-	else
-		printf("%.2s\n", layout);
+	if(!lflag)
+		layout[2] = '\0';
+
+	printf("%s\n", layout);
 
 	XkbFreeNames(kb, XkbGroupNamesMask, True);
 	XkbFreeKeyboard(kb, 0, True);
 	XCloseDisplay(dpy);
-	return EXIT_SUCCESS;
+	return 0;
 }
